@@ -12,7 +12,7 @@ class GeneticAlgorithm:
         self.plot_interval = plot_interval
 
     def initialize_chromosome(self):
-        chromosomes = [np.arange(self.num_of_gene) for _ in range(self.num_of_chromosome)]
+        chromosomes = [np.arange(1, self.num_of_gene + 1) for _ in range(self.num_of_chromosome)]
 
         for chromosome in chromosomes:
             np.random.shuffle(chromosome)
@@ -20,8 +20,9 @@ class GeneticAlgorithm:
         return np.array(chromosomes)
 
     def index2point(self, problem, c):
+        full_idx = np.concatenate((np.array([0] * self.num_of_chromosome)[:, None], c), axis=1)
         return np.take_along_axis(problem[None].repeat(self.num_of_chromosome, axis=0),
-                                  indices=c[:, :, None].repeat(2, axis=2),
+                                  indices=full_idx[:, :, None].repeat(2, axis=2),
                                   axis=1)
 
     @staticmethod
@@ -95,10 +96,10 @@ class GeneticAlgorithm:
             if self.plot_interval and e % self.plot_interval == self.plot_interval - 1:
                 plt.close('all')
 
-            print('[{}] {} epochs. max fitness: {:.4f} min fitness: {:.4f}'.format(dt.now(),
-                                                                                   e,
-                                                                                   np.max(fitness),
-                                                                                   np.min(fitness)))
+            print('[{}] {:3} epochs. max fitness: {:.14f} min fitness: {:.14f}'.format(dt.now(),
+                                                                                       e,
+                                                                                       np.max(fitness),
+                                                                                       np.min(fitness)))
 
         return solutions, chromosomes, fitness
 
@@ -115,7 +116,8 @@ def plot(problem, ans, pause=-1.):
     ax.set_aspect('equal', adjustable='box')
 
     x, y = np.hsplit(problem, 2)
-    ax.plot(x.squeeze(), y.squeeze(), 'o')
+    ax.plot(x.squeeze()[0], y.squeeze()[0], 'ro')
+    ax.plot(x.squeeze()[1:], y.squeeze()[1:], 'o')
 
     ax = fig.add_subplot(122)
     ax.set_aspect('equal', adjustable='box')
@@ -123,7 +125,8 @@ def plot(problem, ans, pause=-1.):
 
     sol_loop = np.concatenate((ans, ans[[0]]), axis=0)
     ax.plot(sol_loop[:, 0], sol_loop[:, 1], 'r-')
-    ax.plot(ans[:, 0], ans[:, 1], 'ko')
+    ax.plot(ans[0, 0], ans[0, 1], 'ro')
+    ax.plot(ans[1:, 0], ans[1:, 1], 'ko')
 
     ax.set_title('{}'.format(dist_1))
     ax.set_aspect('equal', 'box')
@@ -141,10 +144,10 @@ def main(point_num):
     problem = np.random.random((point_num, 2))
 
     # 유전 알고리즘 실행
-    ga = GeneticAlgorithm(num_of_chromosome=50000, num_of_gene=point_num, plot_interval=1)
+    ga = GeneticAlgorithm(num_of_chromosome=50000, num_of_gene=point_num-1, plot_interval=1)
     answers, index_orders, scores = ga.solve(problem=problem, epoch=500)
 
-    print('[{}] max score: {} min score: {}'.format(dt.now(), np.max(scores), np.min(scores)))
+    print('[{}] max score: {:.14f} min score: {:.14f}'.format(dt.now(), np.max(scores), np.min(scores)))
 
     ans = answers[np.argmax(scores)]
 
