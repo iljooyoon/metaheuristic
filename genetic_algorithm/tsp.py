@@ -5,10 +5,12 @@ import matplotlib.pyplot as plt
 
 # 유전 알고리즘
 class GeneticAlgorithm:
-    def __init__(self, num_of_chromosome, num_of_gene, mutation_rate=0.001, plot_interval=0):
+    def __init__(self, num_of_chromosome, num_of_gene, mutation_rate=0.001, max_mutation_rate = 1., plot_interval=0):
         self.num_of_chromosome = num_of_chromosome
         self.num_of_gene = num_of_gene
+        self.init_mutation_rate = mutation_rate
         self.mutation_rate = mutation_rate
+        self.max_mutation_rate = max_mutation_rate
         self.plot_interval = plot_interval
 
     def initialize_chromosome(self):
@@ -75,7 +77,9 @@ class GeneticAlgorithm:
         solutions = self.index2point(problem, chromosomes)
         fitness = self.calc_fitness(solutions)
 
-        print('[{}] init. max fitness: {:.4f} min fitness: {:.4f}'.format(dt.now(), np.max(fitness), np.min(fitness)))
+        print('[{}] init. max fitness: {:.15f}'.format(dt.now(), np.max(fitness)))
+
+        best_fitness = np.max(fitness)
 
         for e in range(epoch):
             if self.plot_interval and e % self.plot_interval == 0:
@@ -93,13 +97,19 @@ class GeneticAlgorithm:
             solutions = self.index2point(problem, chromosomes)
             fitness = self.calc_fitness(solutions)
 
+            if best_fitness < np.max(fitness):
+                best_fitness = np.max(fitness)
+                self.mutation_rate = self.init_mutation_rate
+            else:
+                self.mutation_rate = min(self.mutation_rate * 2, self.max_mutation_rate)
+
             if self.plot_interval and e % self.plot_interval == self.plot_interval - 1:
                 plt.close('all')
 
-            print('[{}] {:3} epochs. max fitness: {:.14f} min fitness: {:.14f}'.format(dt.now(),
-                                                                                       e,
-                                                                                       np.max(fitness),
-                                                                                       np.min(fitness)))
+            print('[{}] {:3} epochs. max fitness: {:.15f} mutation rate: {}'.format(dt.now(),
+                                                                                    e,
+                                                                                    np.max(fitness),
+                                                                                    self.mutation_rate))
 
         return solutions, chromosomes, fitness
 
@@ -132,27 +142,16 @@ def plot(problem, ans, pause=-1.):
     ax.set_aspect('equal', 'box')
 
     fig.tight_layout()
-    plt.get_current_fig_manager().window.wm_geometry("+500+50")
+
+    if hasattr(plt.get_current_fig_manager().window, 'wm_geometry'):
+        plt.get_current_fig_manager().window.wm_geometry("+500+50")
+    elif hasattr(plt.get_current_fig_manager().window, 'SetPosition'):
+        plt.get_current_fig_manager().window.SetPosition((500, 50))
+
     if pause > 0:
         plt.pause(pause)
     else:
         plt.show()
-
-
-def main(point_num):
-    # TSP 문제 생성. (점 20개 범위 0~1 사이)
-    problem = np.random.random((point_num, 2))
-
-    # 유전 알고리즘 실행
-    ga = GeneticAlgorithm(num_of_chromosome=50000, num_of_gene=point_num-1, plot_interval=1)
-    answers, index_orders, scores = ga.solve(problem=problem, epoch=500)
-
-    print('[{}] max score: {:.14f} min score: {:.14f}'.format(dt.now(), np.max(scores), np.min(scores)))
-
-    ans = answers[np.argmax(scores)]
-
-    # plot
-    plot(problem, ans)
 
 
 def softmax(a):
@@ -161,6 +160,23 @@ def softmax(a):
     sum_exp_a = np.sum(exp_a)
     y = exp_a / sum_exp_a
     return y
+
+
+def main(point_num):
+    # TSP 문제 생성. (점 20개 범위 0~1 사이)
+    problem = np.random.random((point_num, 2))
+
+    # 유전 알고리즘 실행
+    ga = GeneticAlgorithm(num_of_chromosome=50000, num_of_gene=point_num-1, plot_interval=1, mutation_rate=0.01,
+                          max_mutation_rate=0.5)
+    answers, index_orders, scores = ga.solve(problem=problem, epoch=500)
+
+    print('[{}] max score: {:.15f}'.format(dt.now(), np.max(scores)))
+
+    ans = answers[np.argmax(scores)]
+
+    # plot
+    plot(problem, ans)
 
 
 if __name__ == '__main__':
