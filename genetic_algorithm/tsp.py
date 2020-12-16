@@ -115,7 +115,7 @@ def get_distance(ans):
     return np.sqrt(((ans - shifted)**2).sum(axis=1)).sum()
 
 
-def plot(problem, ans, pause=-1.):
+def plot(problem, ans, filename=None, pause=-1.):
     fig = plt.figure(figsize=(10, 7))
     # plt.get_current_fig_manager().window.setGeometry()
     ax = fig.add_subplot(121)
@@ -139,15 +139,18 @@ def plot(problem, ans, pause=-1.):
 
     fig.tight_layout()
 
-    if hasattr(plt.get_current_fig_manager().window, 'wm_geometry'):
-        plt.get_current_fig_manager().window.wm_geometry("+500+50")
-    elif hasattr(plt.get_current_fig_manager().window, 'SetPosition'):
-        plt.get_current_fig_manager().window.SetPosition((500, 50))
-
-    if pause > 0:
-        plt.pause(pause)
+    if filename:
+        fig.savefig('{}.jpg'.format(filename))
     else:
-        plt.show()
+        if hasattr(plt.get_current_fig_manager().window, 'wm_geometry'):
+            plt.get_current_fig_manager().window.wm_geometry("+500+50")
+        elif hasattr(plt.get_current_fig_manager().window, 'SetPosition'):
+            plt.get_current_fig_manager().window.SetPosition((500, 50))
+
+        if pause > 0:
+            plt.pause(pause)
+        else:
+            plt.show()
 
 
 def softmax(a):
@@ -172,7 +175,7 @@ def main(point_num):
     ans = answers[np.argmax(scores)]
 
     # plot
-    plot(problem, ans)
+    plot(problem, ans, dt.now())
 
 
 if __name__ == '__main__':
