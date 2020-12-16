@@ -14,6 +14,7 @@ class GeneticAlgorithm:
         self.plot_interval = plot_interval
 
     def initialize_chromosome(self):
+        # TSP 점의 갯수 -1 을 유전자로 갖는 염색체 n 개 생성.
         chromosomes = [np.arange(1, self.num_of_gene + 1) for _ in range(self.num_of_chromosome)]
 
         for chromosome in chromosomes:
@@ -57,7 +58,7 @@ class GeneticAlgorithm:
                 if gene not in offspring:
                     offspring = np.concatenate((offspring, gene[None]), axis=0)
 
-            # 0.1% 확률로 돌연변이 (mutation) 연산. exchange
+            # 돌연변이 (mutation) 연산. exchange
             if np.random.random() < self.mutation_rate:
                 indexes = np.random.randint(self.num_of_gene, size=2)
                 offspring[indexes[0]], offspring[indexes[1]] = offspring[indexes[1]], offspring[indexes[0]]
@@ -68,12 +69,9 @@ class GeneticAlgorithm:
 
     def solve(self, problem, epoch, target_fitness=None):
         # 1. 초기 염색체 집합 생성 (chromosome initialize)
-        # 20개(19개로 해도 되지만) 점을 유전자로 갖는 염색체 n 개 생성.
         chromosomes = self.initialize_chromosome()
 
         # 2. 초기 염색체들에 대한 적합도 계산
-        # 적합도 계산 함수 생성. (적합도는 score 와 동일하게 해도 되지 않을까? -거리. 음수가 안된다면 역수 취하기. 혹은 mean을 뺀 값.)
-        # 적합도 계산.
         solutions = self.index2point(problem, chromosomes)
         fitness = self.calc_fitness(solutions)
 
@@ -89,8 +87,6 @@ class GeneticAlgorithm:
                 break
 
             # 3. 현재 염색체들로부터 자손들을 생성
-            # 현재 부모 중 가장 best 는 그대로 하나 자손으로 유지 하면 좋을듯.
-            # softmax 사용가능. 부모 선택 -> 자손 생성 -> 돌연변이 생성
             chromosomes = self.generate_offspring(chromosomes, fitness)
 
             # 4. 생성된 자손들의 적합도 계산
